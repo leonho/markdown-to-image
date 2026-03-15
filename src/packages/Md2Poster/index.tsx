@@ -1,6 +1,7 @@
 import { ReactNode, useRef, useState, useCallback, forwardRef, useImperativeHandle } from 'react'
 import { cn } from '../../lib/utils'
 import { domToBlob } from 'modern-screenshot'
+import html2canvas from 'html2canvas'
 type ICardType = 'QuoteCard' | 'NewsDigest'
 type IThemeType =
   //gradient
@@ -30,7 +31,8 @@ interface Md2PosterProps {
 }
 
 interface Md2PosterRef {
-  handleCopy: () => Promise<unknown>
+  handleCopy: () => Promise<void>
+  handleDownload: () => Promise<void>
 }
 
 const themeMapClassName = {
@@ -142,8 +144,21 @@ const Md2Poster = forwardRef<Md2PosterRef, Md2PosterProps>(
       })
     }, [mdRef])
 
+    const handleDownload = async () => {
+      if (!mdRef.current) return;
+      
+      const canvas = await html2canvas(mdRef.current);
+      const dataUrl = canvas.toDataURL('image/png');
+      
+      const link = document.createElement('a');
+      link.download = `poster-${new Date().toISOString().slice(0, 10)}.png`;
+      link.href = dataUrl;
+      link.click();
+    }
+
     useImperativeHandle(ref, () => ({
       handleCopy,
+      handleDownload,
     }))
 
     const renderCopy = () => {
@@ -172,6 +187,6 @@ const Md2Poster = forwardRef<Md2PosterRef, Md2PosterProps>(
   }
 )
 
-export type { Md2PosterProps }
+export type { Md2PosterProps, Md2PosterRef }
 
 export default Md2Poster
